@@ -12,8 +12,10 @@
   "dependencies": {
     "@react-native-firebase/analytics": "^7.6.4",
     "@react-native-firebase/app": "^8.4.3",
+    "@react-native-firebase/storage": "^7.4.3",
     "react": "16.13.1",
-    "react-native": "0.63.2"
+    "react-native": "0.63.3",
+    "react-native-image-picker": "^2.3.4"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",

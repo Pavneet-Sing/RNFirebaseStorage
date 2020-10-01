@@ -1,114 +1,130 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
+ * @author Pavneet Singh
  */
 
-import React from 'react';
+import React from "react";
 import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+    StyleSheet,
+    View,
+    Button,
+    Image,
+    ActivityIndicator,
+    Platform
+} from "react-native";
+import storage from '@react-native-firebase/storage';
+import ImagePicker from 'react-native-image-picker';
+export default class App extends React.Component {
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+    state = {
+        imagePath: require("./img/default.jpg"),
+        isLoading: false,
+    }
 
-const App: () => React$Node = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
+    chooseFile = () => {
+        var options = {
+            title: 'Select Image',
+            customButtons: [
+                { name: 'customOptionKey', title: 'Choose Photo from Custom Option' },
+            ],
+            storageOptions: {
+                skipBackup: true, // do not backup to iCloud
+                path: 'images', // store camera images under Pictures/images for android and Documents/images for iOS
+            },
+        };
+        ImagePicker.showImagePicker(options, response => {
+            console.log('Response = ', response);
+
+            if (response.didCancel) {
+                console.log('User cancelled image picker', storage());
+            } else if (response.error) {
+                console.log('ImagePicker Error: ', response.error);
+            } else if (response.customButton) {
+                console.log('User tapped custom button: ', response.customButton);
+                alert(response.customButton);
+            } else {
+                let sourceURI = response.uri;
+                let path = this.getPlatformPath(response).value;
+                let fileName = this.getFileName(response.fileName, path);
+                this.setState({ imagePath: path });
+                this.uploadImageToStorage(path, fileName);
+            }
+        });
+    };
+
+    getFileName(name, path) {
+        if (name != null) { return name; }
+
+        if (Platform.OS === "ios") {
+            path = "~" + path.substring(path.indexOf("/Documents"));
+        }
+        return path.split("/").pop();
+    }
+
+    uploadImageToStorage(path, name) {
+        this.setState({ isLoading: true });
+        let reference = storage().ref(name);
+        console.log(`Path is ${path} : ${reference}`);
+        let task = reference.putFile(path);
+        task.then(() => {
+            console.log('Image uploaded to the bucket!');
+            this.setState({ isLoading: false });
+        }).catch((e) => {
+            console.log('uploading image error => ', e);
+            this.setState({ isLoading: false });
+        });
+    }
+
+    /**
+     * Get platform specific value from response
+     */
+    getPlatformPath({ path, uri }) {
+        return Platform.select({
+            android: { "value": path },
+            ios: { "value": uri }
+        })
+    }
+
+    render() {
+        let { imagePath } = this.state;
+        let imgSource = imagePath
+        if (isNaN(path)) {
+            imgSource = { uri: this.state.imagePath };
+        }
+        console.log(typeof this.state.imagePath);
+        console.log(this.state.imagePath);
+        return (
+            <View>
+                {this.state.isLoading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
+                <View style={styles.container}>
+                    <Image style={styles.uploadImage} source={imgSource} />
+                    <View style={styles.eightyWidthStyle} >
+                        <Button title={'Upload Image iOS'} onPress={this.chooseFile}></Button>
+                    </View>
+                </View>
             </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+        )
+    }
+}
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor: '#e6e6fa',
+        alignItems: 'center',
+    },
+    eightyWidthStyle: {
+        width: '80%',
+        margin: 2,
+    },
+    uploadImage: {
+        resizeMode: 'contain',
+        width: '80%',
+        height: 300,
+    },
+    loadingIndicator: {
+        width: '100%',
+        height: '100%',
+    }
 
-export default App;
+});
