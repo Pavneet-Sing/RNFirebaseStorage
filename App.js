@@ -24,6 +24,7 @@ export default class App extends React.Component {
     }
 
     chooseFile = () => {
+        this.setState({ status: '' });
         var options = {
             title: 'Select Image',
             customButtons: [
@@ -35,8 +36,6 @@ export default class App extends React.Component {
             },
         };
         ImagePicker.showImagePicker(options, response => {
-            console.log('Response = ', response);
-
             if (response.didCancel) {
                 console.log('User cancelled image picker', storage());
             } else if (response.error) {
@@ -64,15 +63,14 @@ export default class App extends React.Component {
     uploadImageToStorage(path, name) {
         this.setState({ isLoading: true });
         let reference = storage().ref(name);
-        console.log(`Path is ${path} : ${reference}`);
         let task = reference.putFile(path);
         task.then(() => {
             console.log('Image uploaded to the bucket!');
-            this.setState({ isLoading: false, status:'Image uploaded successfully' });
+            this.setState({ isLoading: false, status: 'Image uploaded successfully' });
         }).catch((e) => {
             status = 'Something went wrong';
             console.log('uploading image error => ', e);
-            this.setState({ isLoading: false, status:'Something went wrong' });
+            this.setState({ isLoading: false, status: 'Something went wrong' });
         });
     }
 
@@ -86,14 +84,20 @@ export default class App extends React.Component {
         })
     }
 
-    render() {
-        let { imagePath } = this.state;
-        let imgSource = imagePath
+    getPlatformURI(imagePath){
+        let imgSource = imagePath;
         if (isNaN(imagePath)) {
             imgSource = { uri: this.state.imagePath };
+            if (Platform.OS == 'android') {
+                imgSource.uri = "file:///"+imgSource.uri;
+            }
         }
-        console.log(typeof this.state.imagePath);
-        console.log(this.state.imagePath);
+        return imgSource
+    }
+
+    render() {
+        let { imagePath } = this.state;
+        let imgSource = this.getPlatformURI(imagePath)
         return (
             <SafeAreaView style={styles.container}>
                 {
