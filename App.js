@@ -9,7 +9,9 @@ import {
     Button,
     Image,
     ActivityIndicator,
-    Platform
+    Platform,
+    SafeAreaView,
+    Text,
 } from "react-native";
 import storage from '@react-native-firebase/storage';
 import ImagePicker from 'react-native-image-picker';
@@ -18,6 +20,7 @@ export default class App extends React.Component {
     state = {
         imagePath: require("./img/default.jpg"),
         isLoading: false,
+        status: '',
     }
 
     chooseFile = () => {
@@ -40,9 +43,7 @@ export default class App extends React.Component {
                 console.log('ImagePicker Error: ', response.error);
             } else if (response.customButton) {
                 console.log('User tapped custom button: ', response.customButton);
-                alert(response.customButton);
             } else {
-                let sourceURI = response.uri;
                 let path = this.getPlatformPath(response).value;
                 let fileName = this.getFileName(response.fileName, path);
                 this.setState({ imagePath: path });
@@ -67,10 +68,11 @@ export default class App extends React.Component {
         let task = reference.putFile(path);
         task.then(() => {
             console.log('Image uploaded to the bucket!');
-            this.setState({ isLoading: false });
+            this.setState({ isLoading: false, status:'Image uploaded successfully' });
         }).catch((e) => {
+            status = 'Something went wrong';
             console.log('uploading image error => ', e);
-            this.setState({ isLoading: false });
+            this.setState({ isLoading: false, status:'Something went wrong' });
         });
     }
 
@@ -87,21 +89,24 @@ export default class App extends React.Component {
     render() {
         let { imagePath } = this.state;
         let imgSource = imagePath
-        if (isNaN(path)) {
+        if (isNaN(imagePath)) {
             imgSource = { uri: this.state.imagePath };
         }
         console.log(typeof this.state.imagePath);
         console.log(this.state.imagePath);
         return (
-            <View>
-                {this.state.isLoading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
-                <View style={styles.container}>
+            <SafeAreaView style={styles.container}>
+                {
+                    this.state.isLoading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
+                {/* <ActivityIndicator size="large" style={styles.loadingIndicator} /> */}
+                <View style={styles.imgContainer}>
+                    <Text style={styles.boldTextStyle}>{this.state.status}</Text>
                     <Image style={styles.uploadImage} source={imgSource} />
                     <View style={styles.eightyWidthStyle} >
-                        <Button title={'Upload Image iOS'} onPress={this.chooseFile}></Button>
+                        <Button title={'Upload Image'} onPress={this.chooseFile}></Button>
                     </View>
                 </View>
-            </View>
+            </SafeAreaView>
         )
     }
 }
@@ -109,22 +114,34 @@ export default class App extends React.Component {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
         backgroundColor: '#e6e6fa',
+    },
+    imgContainer: {
         alignItems: 'center',
+        justifyContent: 'center',
+        position: 'absolute',
+        width: '100%',
+        height: '100%'
     },
     eightyWidthStyle: {
         width: '80%',
         margin: 2,
     },
     uploadImage: {
-        resizeMode: 'contain',
         width: '80%',
         height: 300,
     },
     loadingIndicator: {
+        zIndex: 5,
         width: '100%',
         height: '100%',
+    },
+    boldTextStyle: {
+        fontWeight: 'bold',
+        fontSize: 22,
+        color: '#5EB0E5',
     }
 
 });
