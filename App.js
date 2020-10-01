@@ -84,12 +84,12 @@ export default class App extends React.Component {
         })
     }
 
-    getPlatformURI(imagePath){
+    getPlatformURI(imagePath) {
         let imgSource = imagePath;
         if (isNaN(imagePath)) {
             imgSource = { uri: this.state.imagePath };
             if (Platform.OS == 'android') {
-                imgSource.uri = "file:///"+imgSource.uri;
+                imgSource.uri = "file:///" + imgSource.uri;
             }
         }
         return imgSource
@@ -100,9 +100,7 @@ export default class App extends React.Component {
         let imgSource = this.getPlatformURI(imagePath)
         return (
             <SafeAreaView style={styles.container}>
-                {
-                    this.state.isLoading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
-                {/* <ActivityIndicator size="large" style={styles.loadingIndicator} /> */}
+                {this.state.isLoading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
                 <View style={styles.imgContainer}>
                     <Text style={styles.boldTextStyle}>{this.state.status}</Text>
                     <Image style={styles.uploadImage} source={imgSource} />
